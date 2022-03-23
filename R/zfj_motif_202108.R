@@ -34,7 +34,12 @@ autoseed_motif_disc<-function(sig_file,outdir=NULL,bk_file="/var/www/html/selex/
   setwd(wd)
   motif_data=result[result %>% str_detect("All Hits")]
     if(length(motif_data)==0) return(list(matrix(0.25,4,6)))
-  .callbk=function(x,ind){x[3:6] %>% read_tsv(col_names = F) %>% .[,-c(1,2)] %>% as.matrix()}
+  .callbk=function(x,ind){
+    tmpfile=tempfile()
+    x[3:6] %>% write_lines(tmpfile)
+    mat=read_tsv(tmpfile,col_names = F,show_col_types = F) %>% .[,-c(1,2)] %>% as.matrix()
+    file.remove(tmpfile); return(mat)
+  }
   motif_list=read_lines_chunked(file = motif_data, callback= ListCallback$new(.callbk), chunk_size = 6)
   motif_list %>% map(.pfm_trim)
 }
